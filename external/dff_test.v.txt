@@ -1,0 +1,25 @@
+
+module logic_analysis(E, W, Clock, OUT);
+
+    input E;
+    input W;
+    input Clock;
+    output OUT;
+
+    dff dffqa (Q_A, O1);
+    dff dffqb (Q_B, O2);
+
+    wire A1, A2, A3, A4, O1, O2, Q_A, Q_B, NQ_B, NQ_A;
+    
+    not qbp (NQB, Q_B);
+    and ga1 (A1, Q_A, NQ_B);
+    and ga2 (A2, Q_A, W);
+    and ga3 (A3, Q_B, NQ_A);
+    and ga4 (A4, Q_B, E);
+
+    or go1 (O1, E, A1, A2);
+    or go2 (O2, W, A3, A4);
+
+    and  gout(OUT, NQ_A, NQ_B);
+
+endmodule

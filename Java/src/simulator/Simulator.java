@@ -52,7 +52,7 @@ public class Simulator {
         for(Gate g : Gate.getValidGates()) {
             // In class, all flip flops initialized to 0.
             if (g.getType() == GateType.DFF) {
-                g.setState(0);
+                g.setState(2);
             } else { // X otherwise.
                 g.setState(2);
             }
@@ -95,13 +95,12 @@ public class Simulator {
                     sensitivities.add(inputGate);
                 }
             }
+            propagate(sensitivities, scheduleMethod, evaluationMethod);
 
-            if (scheduleMethod == GateScheduleMethod.NAIVE){
-                naivePropagation(evaluationMethod);
-            }else {
-                schedulePropagation(sensitivities, evaluationMethod);
-                sensitivities.clear();
-            }
+            long frameDuration = System.nanoTime() - frameStartTime;
+            long stateStartTime = System.nanoTime();
+            this.log("["+evaluationMethod.toString()+"] Execution time: " + frameDuration + " ns"); // Tends to have about 125 ns of overhead.
+            printSystemState();
 
             // Once the propagation for the inputs has completed, we can check the propagation for the DFFs.
             for (Gate g : stateGates) {
@@ -110,17 +109,11 @@ public class Simulator {
                     sensitivities.add(g);
                 }
             }
+            propagate(sensitivities, scheduleMethod, evaluationMethod);
 
-            if (scheduleMethod == GateScheduleMethod.NAIVE) {
-                naivePropagation(evaluationMethod);
-            } else if (scheduleMethod == GateScheduleMethod.BREADTH) {
-                schedulePropagation(sensitivities, evaluationMethod);
-                sensitivities.clear();
-            }
+            long stateDuration = System.nanoTime() - stateStartTime;
+            this.log("["+evaluationMethod.toString()+"] State update time: " + stateDuration + " ns"); // Tends to have about 125 ns of overhead.
 
-            long frameDuration = System.nanoTime() - frameStartTime;
-            this.log("["+evaluationMethod.toString()+"] Execution time: " + frameDuration + " ns"); // Tends to have about 125 ns of overhead.
-            printSystemState();
             simulationTime++;
             adjustedDuration += frameDuration;
             previousInputVector = inputVector;
@@ -131,8 +124,27 @@ public class Simulator {
     }
 
     /**
-     * This method is the core of the simulator. It takes an unconstrained number of precomputed extended
-     * fan outs (LinkedList<Gate> and properly iterates over all of them at once to update in the correct level order.
+     *
+     * Schedules and calculates gate values through fan out.
+     *
+     * @param sensitivities List of gates to fan out propagate from.
+     * @param scheduleMethod The method the simulator should choose to schedule gates.
+     * @param evaluationMethod The method the simulator should use to calculate gates.
+     */
+    private void propagate(ArrayList<Gate> sensitivities, GateScheduleMethod scheduleMethod, GateEvaluationMethod evaluationMethod) {
+        if (scheduleMethod == GateScheduleMethod.NAIVE) {
+            naivePropagation(evaluationMethod);
+        } else if (scheduleMethod == GateScheduleMethod.BREADTH) {
+            schedulePropagation(sensitivities, evaluationMethod);
+            sensitivities.clear();
+        } else if (scheduleMethod == GateScheduleMethod.PRECOMPUTE) {
+            schedulePrecomputePropagation(sensitivities, evaluationMethod);
+            sensitivities.clear();
+        }
+    }
+
+    /**
+     * This method is the core of the simulator.
      *
      * @param sensitivities An array list of gates that need to be propagated.
      */
@@ -148,19 +160,39 @@ public class Simulator {
         while (gateProcessQueue.size() > 0) {
 
             Gate currentGate = gateProcessQueue.poll();
+            System.out.println("Branching on : " + currentGate);
             currentGate.evaluateState(evaluationMethod);
             visited.add(currentGate.getId());
 
             for (Gate f : currentGate.getRawFan(GateFanType.FANOUT)) {
+                System.out.println("Scheduling : " + f);
                 if (!visited.contains(f.getId())) {
                     gateProcessQueue.add(f);
                 }
             }
+
         }
     }
 
     /**
-     * Just updates every gate by level. Great way to test if something's wrong.
+     * This method is the core of the simulator.
+     *
+     * @param sensitivities An array list of gates that need to be propagated.
+     */
+    private void schedulePrecomputePropagation(ArrayList<Gate> sensitivities, GateEvaluationMethod evaluationMethod) {
+
+        Set<Integer> visited = new HashSet<>();
+        for (Gate sensitive : sensitivities) {
+            ListIterator<Gate> iterator = sensitive.getPropagationPath().listIterator();
+            while (iterator.hasNext()) {
+                iterator.next().evaluateState(evaluationMethod);
+            }
+        }
+
+    }
+
+    /**
+     * This method is the core of the simulator. Just updates every gate by level. Great way to test if something's wrong.
      */
     private void naivePropagation(GateEvaluationMethod evaluationMethod) {
         for (int i = 0; i <= Gate.getMaxGateLevel(); i++) {

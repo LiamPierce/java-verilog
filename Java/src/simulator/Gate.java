@@ -133,8 +133,6 @@ public class Gate {
 
     public void setState(int state) {
         this.state = state;
-        System.out.println(this + " setting state to "+state + " | " + this.getFanString(GateFanType.FANIN, false));
-
     }
 
     public int getState() {
@@ -151,15 +149,19 @@ public class Gate {
                 break;
             case NOT:
                 this.setState(Gate.NOT_TABLE[firstFanState]);
+                System.out.println("Setting state to "+Gate.NOT_TABLE[firstFanState]+" because NOT input is "+firstFanState + " from " + this.getWireDriver());
                 break;
             default:
+
+                System.out.println(this.getFanString(GateFanType.FANIN));
+                System.out.println(Arrays.toString(this.fanIn.stream().map(k -> k.getState()).toArray()));
                 int typeValue = this.type.getValue();
                 int intermediateValue = firstFanState;
                 for (int i = 1; i < this.fanIn.size(); i++) {
                     int secondFanState = this.fanIn.get(i).getState();
                     intermediateValue = Gate.LOOKUP_TABLE[typeValue][intermediateValue][secondFanState];
                 }
-
+                System.out.println("New value: " + intermediateValue);
                 this.setState(intermediateValue);
                 break;
         }
@@ -214,6 +216,8 @@ public class Gate {
             return;
         }
 
+        System.out.println("Evaluating gate " + this);
+
         if (evaluationMethod == GateEvaluationMethod.TABLE_LOOKUP) {
             this.tableLookupEvaluation();
         } else if (evaluationMethod == GateEvaluationMethod.INPUT_SCAN) {
@@ -248,7 +252,7 @@ public class Gate {
             visited.add(currentGate.getId());
 
             for (Gate f : currentGate.getRawFan(GateFanType.FANOUT)) {
-                if (!visited.contains(f.getId()) && f.getLevel() >= currentGate.getLevel()) {
+                if (!visited.contains(f.getId())) {
                     gateProcessQueue.add(f);
                 }
             }

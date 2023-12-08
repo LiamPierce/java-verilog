@@ -1,0 +1,21 @@
+module parity_generator_checker(D0, D1, D2, D3, Parity, ParityOK);
+    input D0;
+    input D1;
+    input D2;
+    input D3;
+    output Parity;
+    output ParityOK;
+
+    wire D0_D1, D1_D2, D2_D3, P1, P2, P3;
+
+    xor G1 (D0_D1, D0, D1);
+    xor G2 (D1_D2, D1, D2);
+    xor G3 (D2_D3, D2, D3);
+    xor G4 (Parity, D0_D1, D1_D2, D2_D3);
+
+    and G5 (P1, Parity, D1);
+    and G6 (P2, Parity, D2);
+
+    or G7 (ParityOK, P1, P2);
+    
+endmodule
