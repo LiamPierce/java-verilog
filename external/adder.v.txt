@@ -1,0 +1,18 @@
+module full_adder(A, B, CIN, SUM, COUT);
+    input A;
+    input B;
+    input CIN;
+    output SUM;
+    output COUT;
+
+    wire S1, C1, C2, C3;
+
+    xor G1 (S1, A, B);
+    xor G2 (SUM, S1, CIN);
+    
+    and G3 (C1, A, B);
+    and G4 (C2, A, CIN);
+    and G5 (C3, B, CIN);
+
+    or G6 (COUT, C1, C2, C3);
+endmodule

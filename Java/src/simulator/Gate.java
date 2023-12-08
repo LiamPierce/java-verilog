@@ -85,7 +85,7 @@ public class Gate {
         this.name = name;
         this.type = type;
         this.isOutput = false;
-        this.state = 0;
+        this.state = 2;
 
         this.setLevel(level);
 
@@ -114,8 +114,6 @@ public class Gate {
     public void setLevel(int level) {
         this.level = level;
 
-        System.out.println(this + " setting level to "+level);
-
         if (level > Gate.maxGateLevel){
             Gate.maxGateLevel = level;
         }
@@ -135,6 +133,8 @@ public class Gate {
 
     public void setState(int state) {
         this.state = state;
+        System.out.println(this + " setting state to "+state + " | " + this.getFanString(GateFanType.FANIN, false));
+
     }
 
     public int getState() {
@@ -142,12 +142,11 @@ public class Gate {
     }
 
     private void tableLookupEvaluation() {
-        if (this.fanIn.size() == 0) {
-            System.out.println(this);
-        }
         int firstFanState = this.fanIn.get(0).getState();
         switch (this.type) {
             case DFF:
+                System.out.println(this.fanIn.get(0));
+                System.out.println("Setting DFF to first fan state " + firstFanState + ".");
                 this.setState(firstFanState);
                 break;
             case NOT:
@@ -249,7 +248,7 @@ public class Gate {
             visited.add(currentGate.getId());
 
             for (Gate f : currentGate.getRawFan(GateFanType.FANOUT)) {
-                if (!visited.contains(f.getId()) && f.getLevel() == currentGate.getLevel() + 1) {
+                if (!visited.contains(f.getId()) && f.getLevel() >= currentGate.getLevel()) {
                     gateProcessQueue.add(f);
                 }
             }

@@ -1,8 +1,6 @@
+import simulator.*;
 import simulator.Compiler;
-import simulator.Gate;
 import simulator.GateEvaluationMethod;
-import simulator.GateEvaluationMethod;
-import simulator.Simulator;
 
 public class main {
 
@@ -11,15 +9,22 @@ public class main {
 
 
 //        Compiler compilerOne = new Compiler();
-//        compilerOne.loadVerilogFile("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/external/S27.v.txt");
-//        compilerOne.downloadCompiledVerilog("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/S27.compiled.txt");
+//        compilerOne.loadVerilogFile("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/external/adder.v.txt");
+//        compilerOne.downloadCompiledVerilog("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/adder.compiled.txt");
+//
+//        Gate.resetStatistics();
 
         Simulator simulatorOne = new Simulator();
         simulatorOne.loadCompiledVerilog("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/S27.compiled.txt");
         simulatorOne.loadSimulationInputs("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/external/S27.test_vec.txt");
-        simulatorOne.start(GateEvaluationMethod.INPUT_SCAN);
-        simulatorOne.resetGateStates();
-        simulatorOne.start(GateEvaluationMethod.TABLE_LOOKUP);
+        //simulatorOne.start(GateEvaluationMethod.INPUT_SCAN);
+        simulatorOne.start(GateScheduleMethod.BREADTH, GateEvaluationMethod.TABLE_LOOKUP);
+
+//        Simulator simulatorOne = new Simulator();
+//        simulatorOne.loadCompiledVerilog("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/S27.compiled.txt");
+//        simulatorOne.loadSimulationInputs("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/external/S27.test_vec.txt");
+//        //simulatorOne.start(GateEvaluationMethod.INPUT_SCAN);
+//        simulatorOne.start(GateEvaluationMethod.TABLE_LOOKUP);
 
         //        Compiler compilerTwo = new Compiler();
         //        compilerTwo.loadVerilogFile("/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11/external/S35.v.txt");

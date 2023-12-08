@@ -44,7 +44,10 @@ public class Simulator {
         this.log(x, SimulatorLogLevel.INFO);
     }
 
-    public void resetGateStates() {
+    /**
+     * Resets the simulation.
+     */
+    private void resetGateStates() {
         simulationTime = 0;
         for(Gate g : Gate.getValidGates()) {
             // In class, all flip flops initialized to 0.
@@ -56,7 +59,12 @@ public class Simulator {
         }
     }
 
-    public void start(GateEvaluationMethod evaluationMethod) {
+    /**
+     * Runs the simulation.
+     *
+     * @param evaluationMethod The method for evaluating gate states.
+     */
+    public void start(GateScheduleMethod scheduleMethod, GateEvaluationMethod evaluationMethod) {
         if (!gatesReady || !inputsReady) {
             this.log("The simulator is not yet properly configured to run.");
         }
@@ -73,36 +81,49 @@ public class Simulator {
 
             // Because of the way the propagations are structured,
             // it becomes easy to propagate correctly using a list of extended fans.
-            ArrayList<LinkedList<Gate>> propagations = new ArrayList<>();
+            ArrayList<Gate> sensitivities = new ArrayList<>();
 
             // Obviously, a frame must start by setting the input gates to the input vector.
             for (int i = 0; i < inputVector.size(); i++) {
                 int inputVectorState = inputVector.get(i);
-                this.inputGates.get(i).setState(inputVectorState);
+
+                Gate inputGate = this.inputGates.get(i);
+                inputGate.setState(inputVectorState);
 
                 if (inputVectorState != previousInputVector.get(i)) {
                     // Add the full propagation path to the propagations array.
-                    propagations.add(schedulePrecomputes.get(this.inputGates.get(i).getName()));
+                    sensitivities.add(inputGate);
                 }
             }
 
-            schedulePropagation(propagations, evaluationMethod);
+            if (scheduleMethod == GateScheduleMethod.NAIVE){
+                naivePropagation(evaluationMethod);
+            }else {
+                schedulePropagation(sensitivities, evaluationMethod);
+                sensitivities.clear();
+            }
 
             // Once the propagation for the inputs has completed, we can check the propagation for the DFFs.
             for (Gate g : stateGates) {
                 if (g.getWireDriver().getState() != g.getState()) {
                     // Add the full propagation path to the propagations array.
-                    propagations.add(schedulePrecomputes.get(g.getName()));
+                    sensitivities.add(g);
                 }
             }
 
-            schedulePropagation(propagations, evaluationMethod);
+            if (scheduleMethod == GateScheduleMethod.NAIVE) {
+                naivePropagation(evaluationMethod);
+            } else if (scheduleMethod == GateScheduleMethod.BREADTH) {
+                schedulePropagation(sensitivities, evaluationMethod);
+                sensitivities.clear();
+            }
 
             long frameDuration = System.nanoTime() - frameStartTime;
             this.log("["+evaluationMethod.toString()+"] Execution time: " + frameDuration + " ns"); // Tends to have about 125 ns of overhead.
             printSystemState();
             simulationTime++;
             adjustedDuration += frameDuration;
+            previousInputVector = inputVector;
         }
 
         long totalDuration = System.nanoTime() - initTime;
@@ -113,55 +134,45 @@ public class Simulator {
      * This method is the core of the simulator. It takes an unconstrained number of precomputed extended
      * fan outs (LinkedList<Gate> and properly iterates over all of them at once to update in the correct level order.
      *
-     * @param propagations An array list of linked lists which represent a gate's extended fan out.
+     * @param sensitivities An array list of gates that need to be propagated.
      */
-    private void schedulePropagation(ArrayList<LinkedList<Gate>> propagations, GateEvaluationMethod evaluationMethod){
-        int propagationLevel = 0;
-        ArrayList<ListIterator<Gate>> propagationIterators = new ArrayList<>();
+    private void schedulePropagation(ArrayList<Gate> sensitivities, GateEvaluationMethod evaluationMethod) {
 
-        // Set up new iterators for each propagation path. We'll follow each at the same time up the level depth.
-        for (LinkedList<Gate> propagation : propagations) {
-            propagationIterators.add(propagation.listIterator(0));
+        Set<Integer> visited = new HashSet<>();
+
+        Queue<Gate> gateProcessQueue = new ArrayDeque<>();
+        for (Gate sensitive : sensitivities) {
+            gateProcessQueue.add(sensitive);
         }
 
-        Queue<LinkedList<Gate>> removalQueue = new ArrayDeque<>();
+        while (gateProcessQueue.size() > 0) {
 
-        while (propagationLevel < Gate.getMaxGateLevel()) {
-            // For each propagation path, execute per level.
-            int iterationLocks = 0;
-            for (int propagationIndex = 0; propagationIndex < propagations.size(); propagationIndex++) {
-                ListIterator<Gate> iterator = propagationIterators.get(propagationIndex);
+            Gate currentGate = gateProcessQueue.poll();
+            currentGate.evaluateState(evaluationMethod);
+            visited.add(currentGate.getId());
 
-                while (iterator.hasNext()) {
-                    Gate g = iterator.next();
-
-                    if (g.getLevel() > propagationLevel) {
-                        iterator.previous();
-                        iterationLocks += 1;
-                        break;
-                    }
-
-                    System.out.println("Iteration level " + propagationLevel +" "+ g);
-
-                    g.evaluateState(evaluationMethod);
+            for (Gate f : currentGate.getRawFan(GateFanType.FANOUT)) {
+                if (!visited.contains(f.getId())) {
+                    gateProcessQueue.add(f);
                 }
-
-                if (!iterator.hasNext()) {
-                    removalQueue.add(propagations.get(propagationIndex));
-                    continue;
-                }
-            }
-
-            if (iterationLocks == propagations.size()) {
-                propagationLevel++;
-            }
-
-            while (removalQueue.size() > 0) {
-                propagations.remove(removalQueue.poll());
             }
         }
     }
 
+    /**
+     * Just updates every gate by level. Great way to test if something's wrong.
+     */
+    private void naivePropagation(GateEvaluationMethod evaluationMethod) {
+        for (int i = 0; i <= Gate.getMaxGateLevel(); i++) {
+            for (Gate g : Gate.getGatesAtLevel(i)) {
+                g.evaluateState(evaluationMethod);
+            }
+        }
+    }
+
+    /**
+     * Prints the input, output, state report of the system.
+     */
     public void printSystemState(){
 
         this.log(" ===== STATE REPORT [SimTime = "+simulationTime+"] =====" );

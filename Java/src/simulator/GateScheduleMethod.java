@@ -1,2 +1,5 @@
-package simulator;public enum GateScheduleMethod {
+package simulator;
+
+public enum GateScheduleMethod {
+    NAIVE, BREADTH
 }
