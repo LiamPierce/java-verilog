@@ -1,0 +1,16 @@
+module big_ander(G0,G1, G2, G3, G4);
+input G0;
+input G1;
+input G2;
+input G3;
+
+output G4;
+
+wire 	G5,G6, G7;
+
+and XG1 (G5, G0, G1);
+and XG2 (G6, G5, G2);
+and XG3 (G7, G6, G3);
+
+
+endmodule
