@@ -64,9 +64,11 @@ This breadth scheduling method takes the list of updated gates from a given fram
 
 Since this method continues to check gate changes all the way through the propagation, this method will update the minimum number of gates every time.
 
+This is the method that most closely matches the original.
+
 ### Precompute
 
-This was an attempt at checking if the computation of the propagation list was worth precomputing. It just does the naive method but precomputed.
+This was an attempt at checking if the computation of the propagation list was worth precomputing. It just does the naive method but precomputed. Not a great method.
 
 ## Evaluation Methods
 

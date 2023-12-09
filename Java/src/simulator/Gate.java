@@ -41,8 +41,6 @@ public class Gate {
     private ArrayList<Gate> fanIn = new ArrayList<>();
     private ArrayList<Gate> fanOut = new ArrayList<>();
 
-    private Gate next = null;
-
     public static int getAutoIncrement() {
         return Gate.autoIncrement;
     }
