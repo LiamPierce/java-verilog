@@ -131,9 +131,86 @@ An XOR state variable is set to true when a 1 is read. If another 1 is read and 
 
 After writing this report once, I noticed that for circuits with a large number of unknowns, the input scan was always better. So I implemented a hybrid evaluation which chooses between table lookup and input scan based on the current state of the first previous gate.
 
-As the next section will show, even with the added check, this hybrid evaluation is significantly faster than either the table lookup or input scan evaluation methods.
+As the benchmarking section will show, even with the added check, this hybrid evaluation is significantly faster than either the table lookup or input scan evaluation methods.
 
-### Native
+## Compiler Output 
+
+### S27 
+
+Below is a truncated compiler report (loglevel = INFO) along with the completed output file.
+
+```
+[INFO][@2023-12-09T06:12:00.505588Z] Parsed module 'main' with 5 ports.
+[INFO][@2023-12-09T06:12:00.505614Z] Discovered port names: G0 G1 G2 G3 G17 
+[INFO][@2023-12-09T06:12:00.505654Z] Finished parsing module.
+[INFO][@2023-12-09T06:12:00.505845Z] Fanout ended at {NOR XG12}[28][2]
+[INFO][@2023-12-09T06:12:00.505861Z] Fanout ended at {OUTPUT G17}[4][3]
+[INFO][@2023-12-09T06:12:00.505869Z] Visited 21 gates during level adjustment and optimization.
+[INFO][@2023-12-09T06:12:00.505876Z] ==== VERILOG LOAD STATS ====
+[INFO][@2023-12-09T06:12:00.505884Z] Total Gates or Wires Created: 30
+[INFO][@2023-12-09T06:12:00.505891Z] Total Wires Removed Through Optimization: 12
+[INFO][@2023-12-09T06:12:00.505900Z] Gates at level 0:7
+[INFO][@2023-12-09T06:12:00.505909Z] Gates at level 1:6
+[INFO][@2023-12-09T06:12:00.505916Z] Gates at level 2:7
+[INFO][@2023-12-09T06:12:00.505924Z] Gates at level 3:2
+[INFO][@2023-12-09T06:12:00.505935Z] Gate list at level 0:[{INPUT G0}[0][0], {INPUT G1}[1][0], {INPUT G2}[2][0], {INPUT G3}[3][0], {DFF XG1}[17][0], {DFF XG2}[18][0], {DFF XG3}[19][0]]
+[INFO][@2023-12-09T06:12:00.505947Z] Gate list at level 1:[{NOT XG4}[20][1], {NOR XG6}[22][1], {NOR XG9}[25][1], {OR XG8}[24][1], {AND XG5}[21][1], {NOR XG11}[27][1]]
+[INFO][@2023-12-09T06:12:00.505956Z] Gate list at level 2:[{WIRE G14}[8][2], {WIRE G13}[13][2], {WIRE G16}[12][2], {OR XG7}[23][2], {NAND XG10}[26][2], {NOR XG12}[28][2], {NOT XG13}[29][2]]
+[INFO][@2023-12-09T06:12:00.505965Z] Gate list at level 3:[{WIRE G9}[14][3], {OUTPUT G17}[4][3]]
+INPUT false 0 0 1 XG4 G0
+INPUT false 0 0 1 XG6 G1
+INPUT false 0 0 1 XG9 G2
+INPUT false 0 0 1 XG8 G3
+OUTPUT true 3 1 XG13 0 G17
+DFF false 0 1 XG12 1 XG11 XG1
+DFF false 0 1 XG11 1 XG5 XG2
+DFF false 0 1 XG9 1 XG6 XG3
+NOT false 1 1 G0 2 XG5 XG12 XG4
+AND false 1 2 XG2 XG4 2 XG8 XG7 XG5
+NOR false 1 2 XG3 G1 2 XG9 XG7 XG6
+OR false 2 2 XG6 XG5 1 XG10 XG7
+OR false 1 2 XG5 G3 1 XG10 XG8
+NOR false 1 2 XG6 G2 0 XG9
+NAND false 2 2 XG7 XG8 1 XG11 XG10
+NOR false 1 2 XG10 XG1 2 XG12 XG13 XG11
+NOR false 2 2 XG11 XG4 0 XG12
+NOT false 2 1 XG11 1 G17 XG13
+```
+
+### S35
+
+The compiler report, even when truncated, is too large to fit in this report. It is included in the transcripts section.
+
+## Simulator Output
+
+### S27
+
+```
+[INFO][@2023-12-09T06:11:58.208921Z]  ===== STATE REPORT [SimTime = 0] =====
+[INFO][@2023-12-09T06:11:58.208955Z] INPUT : G0[0] G1[0] G2[0] G3[0] 
+[INFO][@2023-12-09T06:11:58.208969Z] STATE : XG1[2] XG2[2] XG3[2] 
+[INFO][@2023-12-09T06:11:58.208980Z] OUTPUT : G17[2] 
+[INFO][@2023-12-09T06:11:58.209003Z]  ===== STATE REPORT [SimTime = 1] =====
+[INFO][@2023-12-09T06:11:58.209019Z] INPUT : G0[0] G1[0] G2[1] G3[0] 
+[INFO][@2023-12-09T06:11:58.209029Z] STATE : XG1[0] XG2[2] XG3[2] 
+[INFO][@2023-12-09T06:11:58.209039Z] OUTPUT : G17[2] 
+[INFO][@2023-12-09T06:11:58.209076Z]  ===== STATE REPORT [SimTime = 2] =====
+[INFO][@2023-12-09T06:11:58.209092Z] INPUT : G0[0] G1[1] G2[0] G3[0] 
+[INFO][@2023-12-09T06:11:58.209103Z] STATE : XG1[0] XG2[2] XG3[0] 
+[INFO][@2023-12-09T06:11:58.209111Z] OUTPUT : G17[2] 
+[INFO][@2023-12-09T06:11:58.209145Z]  ===== STATE REPORT [SimTime = 3] =====
+[INFO][@2023-12-09T06:11:58.209160Z] INPUT : G0[1] G1[0] G2[0] G3[0] 
+[INFO][@2023-12-09T06:11:58.209170Z] STATE : XG1[0] XG2[2] XG3[1] 
+[INFO][@2023-12-09T06:11:58.209179Z] OUTPUT : G17[1] 
+[INFO][@2023-12-09T06:11:58.209202Z]  ===== STATE REPORT [SimTime = 4] =====
+[INFO][@2023-12-09T06:11:58.209217Z] INPUT : G0[1] G1[1] G2[1] G3[1] 
+[INFO][@2023-12-09T06:11:58.209227Z] STATE : XG1[1] XG2[0] XG3[1] 
+[INFO][@2023-12-09T06:11:58.209236Z] OUTPUT : G17[1] 
+```
+
+### S35
+
+The output for the S35 circuit is in the transcripts folder and is too large to include here.
 
 ## Simple Benchmarking
 
@@ -374,33 +451,6 @@ The Input Scan evaluation method is faster for circuits with a lot of gates with
 The Table Lookup evaluation method is faster for circuits with a lot of gates with known states.
 **The Hybrid evaluation is faster for both.**
 
-## Simulator Output
+## Other Files
 
-### S27
-
-```
-[INFO][@2023-12-09T06:11:58.208921Z]  ===== STATE REPORT [SimTime = 0] =====
-[INFO][@2023-12-09T06:11:58.208955Z] INPUT : G0[0] G1[0] G2[0] G3[0] 
-[INFO][@2023-12-09T06:11:58.208969Z] STATE : XG1[2] XG2[2] XG3[2] 
-[INFO][@2023-12-09T06:11:58.208980Z] OUTPUT : G17[2] 
-[INFO][@2023-12-09T06:11:58.209003Z]  ===== STATE REPORT [SimTime = 1] =====
-[INFO][@2023-12-09T06:11:58.209019Z] INPUT : G0[0] G1[0] G2[1] G3[0] 
-[INFO][@2023-12-09T06:11:58.209029Z] STATE : XG1[0] XG2[2] XG3[2] 
-[INFO][@2023-12-09T06:11:58.209039Z] OUTPUT : G17[2] 
-[INFO][@2023-12-09T06:11:58.209076Z]  ===== STATE REPORT [SimTime = 2] =====
-[INFO][@2023-12-09T06:11:58.209092Z] INPUT : G0[0] G1[1] G2[0] G3[0] 
-[INFO][@2023-12-09T06:11:58.209103Z] STATE : XG1[0] XG2[2] XG3[0] 
-[INFO][@2023-12-09T06:11:58.209111Z] OUTPUT : G17[2] 
-[INFO][@2023-12-09T06:11:58.209145Z]  ===== STATE REPORT [SimTime = 3] =====
-[INFO][@2023-12-09T06:11:58.209160Z] INPUT : G0[1] G1[0] G2[0] G3[0] 
-[INFO][@2023-12-09T06:11:58.209170Z] STATE : XG1[0] XG2[2] XG3[1] 
-[INFO][@2023-12-09T06:11:58.209179Z] OUTPUT : G17[1] 
-[INFO][@2023-12-09T06:11:58.209202Z]  ===== STATE REPORT [SimTime = 4] =====
-[INFO][@2023-12-09T06:11:58.209217Z] INPUT : G0[1] G1[1] G2[1] G3[1] 
-[INFO][@2023-12-09T06:11:58.209227Z] STATE : XG1[1] XG2[0] XG3[1] 
-[INFO][@2023-12-09T06:11:58.209236Z] OUTPUT : G17[1] 
-```
-
-### S35
-
-The output for the S35 circuit is in the transcripts folder and is too large to include here.
+I've included a screenshot of one of the tests run on the gate class and a few other items. Some extra programs are included from testing.
