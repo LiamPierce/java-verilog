@@ -1,6 +1,8 @@
 package simulator;
 
 import javax.naming.InvalidNameException;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -10,9 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Simulator {
-
-    public int maxLogLevel = 3;
+public class Simulator extends Logging {
 
     private Map<String, Boolean> inputNames = new HashMap<>();
     private Map<String, Boolean> outputNames = new HashMap<>();
@@ -29,20 +29,14 @@ public class Simulator {
 
     private Map<String, LinkedList<Gate>> schedulePrecomputes = new HashMap<>();
 
+    private ArrayList<ArrayList<String>> runStatistics = new ArrayList<>();
+
     private boolean gatesReady = false;
     private boolean inputsReady = false;
 
     private int simulationTime = 0; // "Time" is more like "Tick" in this. Just increments.
 
-    private void log(Object x, SimulatorLogLevel logLevel) {
-        if (logLevel.getValue() <= maxLogLevel) {
-            System.out.println("["+logLevel.toString()+"][@"+ Instant.now().truncatedTo(ChronoUnit.MICROS)+"] "+x.toString());
-        }
-    }
-
-    private void log(Object x) {
-        this.log(x, SimulatorLogLevel.INFO);
-    }
+    private int lastScheduleGateCount = 0;
 
     /**
      * Resets the simulation.
@@ -50,12 +44,7 @@ public class Simulator {
     private void resetGateStates() {
         simulationTime = 0;
         for(Gate g : Gate.getValidGates()) {
-            // In class, all flip flops initialized to 0.
-            if (g.getType() == GateType.DFF) {
-                g.setState(2);
-            } else { // X otherwise.
-                g.setState(2);
-            }
+            g.setState(2);
         }
     }
 
@@ -77,6 +66,8 @@ public class Simulator {
         ArrayList<Integer> previousInputVector = new ArrayList<>(Collections.nCopies(inputGates.size(), 2));
         // Loop through each "frame" of input vector.
         for (ArrayList<Integer> inputVector : inputVectors) {
+            ArrayList<String> frameStatistics = new ArrayList<>();
+
             long frameStartTime = System.nanoTime();
 
             // Because of the way the propagations are structured,
@@ -97,10 +88,11 @@ public class Simulator {
             }
             propagate(sensitivities, scheduleMethod, evaluationMethod);
 
-            long frameDuration = System.nanoTime() - frameStartTime;
-            long stateStartTime = System.nanoTime();
-            this.log("["+evaluationMethod.toString()+"] Execution time: " + frameDuration + " ns"); // Tends to have about 125 ns of overhead.
+            long gateFrameDuration = System.nanoTime() - frameStartTime;
+            frameStatistics.add("Gate update took " + gateFrameDuration + " ns  ("+(gateFrameDuration / 1E6) + " ms)");
+            frameStatistics.add(lastScheduleGateCount + " gates scheduled");
             printSystemState();
+            long stateStartTime = System.nanoTime();
 
             // Once the propagation for the inputs has completed, we can check the propagation for the DFFs.
             for (Gate g : stateGates) {
@@ -111,16 +103,32 @@ public class Simulator {
             }
             propagate(sensitivities, scheduleMethod, evaluationMethod);
 
-            long stateDuration = System.nanoTime() - stateStartTime;
-            this.log("["+evaluationMethod.toString()+"] State update time: " + stateDuration + " ns"); // Tends to have about 125 ns of overhead.
+            long stateFrameDuration = System.nanoTime() - stateStartTime;
+            frameStatistics.add("State update took " + stateFrameDuration + " ns ("+(stateFrameDuration / 1E6) + " ms)");
+            frameStatistics.add(lastScheduleGateCount + " gates scheduled from state update");
+            runStatistics.add(frameStatistics);
+
+            // The adjusted duration is the full update duration minus any time for logging & management code to run.
+            // It is not meaningful to record the benchmark with the logging included.
+            adjustedDuration += gateFrameDuration + stateFrameDuration;
 
             simulationTime++;
-            adjustedDuration += frameDuration;
             previousInputVector = inputVector;
         }
 
         long totalDuration = System.nanoTime() - initTime;
-        this.log("["+evaluationMethod.toString()+"] Total execution time: " + totalDuration + " ns. Execution time adjusted for logging code: " + adjustedDuration + " ns.");
+
+        this.log("Statistics printout: ");
+        for (int i = 0; i < inputVectors.size(); i++) {
+            ArrayList<String> frameStatistics = runStatistics.get(i);
+            this.log("====== Frame Statistics (SimTime = "+i+") ======");
+            for (String stat : frameStatistics) {
+                this.log(stat);
+            }
+        }
+
+        this.log("["+evaluationMethod.toString()+"] Total execution time " + adjustedDuration + " ns ("+(adjustedDuration / 1E6) + " ms).");
+
     }
 
     /**
@@ -132,6 +140,7 @@ public class Simulator {
      * @param evaluationMethod The method the simulator should use to calculate gates.
      */
     private void propagate(ArrayList<Gate> sensitivities, GateScheduleMethod scheduleMethod, GateEvaluationMethod evaluationMethod) {
+        lastScheduleGateCount = 0;
         if (scheduleMethod == GateScheduleMethod.NAIVE) {
             naivePropagation(evaluationMethod);
         } else if (scheduleMethod == GateScheduleMethod.BREADTH) {
@@ -150,7 +159,7 @@ public class Simulator {
      */
     private void schedulePropagation(ArrayList<Gate> sensitivities, GateEvaluationMethod evaluationMethod) {
 
-        Set<Integer> visited = new HashSet<>();
+        Set<String> visited = new HashSet<>();
 
         Queue<Gate> gateProcessQueue = new ArrayDeque<>();
         for (Gate sensitive : sensitivities) {
@@ -160,17 +169,23 @@ public class Simulator {
         while (gateProcessQueue.size() > 0) {
 
             Gate currentGate = gateProcessQueue.poll();
-            System.out.println("Branching on : " + currentGate);
+            int state = currentGate.getState();
             currentGate.evaluateState(evaluationMethod);
-            visited.add(currentGate.getId());
+            int newState = currentGate.getState();
 
-            for (Gate f : currentGate.getRawFan(GateFanType.FANOUT)) {
-                System.out.println("Scheduling : " + f);
-                if (!visited.contains(f.getId())) {
-                    gateProcessQueue.add(f);
+            lastScheduleGateCount++;
+
+            // Only propagate if the gate has changed.
+            if (currentGate.getType() == GateType.INPUT || newState != state) {
+                for (Gate f : currentGate.getRawFan(GateFanType.FANOUT)) {
+
+                    // Check to see if this gate has been visited from this exact path. This prevents infinite loops.
+                    if (!visited.contains(currentGate.getId() + "-" + f.getId())) {
+                        gateProcessQueue.add(f);
+                        visited.add(currentGate.getId() + "-" + f.getId());
+                    }
                 }
             }
-
         }
     }
 
@@ -185,6 +200,7 @@ public class Simulator {
         for (Gate sensitive : sensitivities) {
             ListIterator<Gate> iterator = sensitive.getPropagationPath().listIterator();
             while (iterator.hasNext()) {
+                lastScheduleGateCount++;
                 iterator.next().evaluateState(evaluationMethod);
             }
         }
@@ -198,6 +214,7 @@ public class Simulator {
         for (int i = 0; i <= Gate.getMaxGateLevel(); i++) {
             for (Gate g : Gate.getGatesAtLevel(i)) {
                 g.evaluateState(evaluationMethod);
+                lastScheduleGateCount++;
             }
         }
     }
@@ -285,7 +302,7 @@ public class Simulator {
             fanOutQueues.add(fanOutQueue);
         }
 
-        this.log("Created new "+gateType+" " + gateDescription+".");
+        this.log("Created new "+gateType+" " + gateDescription+".", SimulatorLogLevel.DEBUG);
     }
 
     /**
@@ -321,6 +338,7 @@ public class Simulator {
                 }
             }
 
+            // For these two precompute blocks, these are only used when the scheduling type is set to precompute.
             // Compute schedule precomputes for inputs.
             for (Gate g : this.inputGates){
                 schedulePrecomputes.put(g.getName(), g.getPropagationPath());

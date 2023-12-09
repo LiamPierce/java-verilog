@@ -11,9 +11,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Compiler {
-
-    public int maxLogLevel = 3;
+public class Compiler extends Logging {
 
     ///
     ///  Parsing information.
@@ -29,17 +27,6 @@ public class Compiler {
 
     // For DFF gates that need to be "defaned" from previous outputs to ensure correct state.
     protected ArrayList<Gate> defanGates = new ArrayList<>();
-
-
-    private void log(Object x, SimulatorLogLevel logLevel) {
-        if (logLevel.getValue() <= maxLogLevel) {
-            System.out.println("["+logLevel.toString()+"][@"+Instant.now().truncatedTo(ChronoUnit.MICROS)+"] "+x.toString());
-        }
-    }
-
-    private void log(Object x) {
-        this.log(x, SimulatorLogLevel.INFO);
-    }
 
 
     /**
@@ -263,7 +250,7 @@ public class Compiler {
 
         while (processQueue.size() > 0) {
             ArrayList<Gate> process = processQueue.poll();
-            this.log("Running process group with width : " + process.size() + " sourced from "+sourceDequeue.poll());
+            this.log("Running process group with width : " + process.size() + " sourced from "+sourceDequeue.poll(), SimulatorLogLevel.DEBUG);
             System.out.println(Arrays.toString(process.toArray()));
             for (Gate g : process) {
                 if (visited.contains(g.getId())) {
@@ -335,7 +322,7 @@ public class Compiler {
 
     private void dwl(String line, FileWriter writer) throws IOException{
         String modifiedString = line.replaceAll("\\s{2,}", " ");
-        System.out.print(modifiedString);
+        lognpl(modifiedString, SimulatorLogLevel.INFO);
         writer.write(modifiedString);
     }
 

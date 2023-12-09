@@ -22,6 +22,9 @@ public class Gate {
     private static int optimizedGates = 0;
     private static int maxGateLevel = 0;
 
+    private static long totalEvaluationTime = 0;
+    private static long totalEvaluations = 0;
+
     private static Map<String, Gate> gateLookup = new HashMap<>();
     private static Map<Integer, List<Gate>> gateLevelLookup = new HashMap<>(); // Made as map for ease.
 
@@ -73,6 +76,10 @@ public class Gate {
         Gate.gateLevelLookup = new HashMap<>(); // Made as map for ease.
 
         Gate.validGates = new ArrayList<>();
+    }
+
+    public static long averageEvaluationTime(){
+        return totalEvaluations == 0 ? 0 : totalEvaluationTime / totalEvaluations;
     }
 
     public static Gate fromName(String name) {
@@ -141,44 +148,36 @@ public class Gate {
 
     private void tableLookupEvaluation() {
         int firstFanState = this.fanIn.get(0).getState();
-        switch (this.type) {
-            case DFF:
-                System.out.println(this.fanIn.get(0));
-                System.out.println("Setting DFF to first fan state " + firstFanState + ".");
-                this.setState(firstFanState);
-                break;
-            case NOT:
-                this.setState(Gate.NOT_TABLE[firstFanState]);
-                System.out.println("Setting state to "+Gate.NOT_TABLE[firstFanState]+" because NOT input is "+firstFanState + " from " + this.getWireDriver());
-                break;
-            default:
 
-                System.out.println(this.getFanString(GateFanType.FANIN));
-                System.out.println(Arrays.toString(this.fanIn.stream().map(k -> k.getState()).toArray()));
-                int typeValue = this.type.getValue();
-                int intermediateValue = firstFanState;
-                for (int i = 1; i < this.fanIn.size(); i++) {
-                    int secondFanState = this.fanIn.get(i).getState();
-                    intermediateValue = Gate.LOOKUP_TABLE[typeValue][intermediateValue][secondFanState];
-                }
-                System.out.println("New value: " + intermediateValue);
-                this.setState(intermediateValue);
-                break;
+        int typeValue = (this.type.getValue());
+        if (typeValue >= 0) {
+            int intermediateValue = firstFanState;
+
+            for (int i = 1; i < this.fanIn.size(); i++) {
+                int secondFanState = this.fanIn.get(i).getState();
+                intermediateValue = Gate.LOOKUP_TABLE[typeValue][intermediateValue][secondFanState];
+            }
+
+            this.setState(intermediateValue);
+        } else if (this.type == GateType.DFF) {
+            this.setState(firstFanState);
+        } else if (this.type == GateType.NOT) {
+            this.setState(Gate.NOT_TABLE[firstFanState]);
         }
+
     }
 
-    // TODO: FIX XOR.
     private void inputScanEvaluation() {
 
         boolean unknownValue = false;
+        boolean xorState = false;
+
         int typeValue = (this.type == GateType.NOT ? GateType.NAND : this.type).getValue();
 
         for(int i = 0; i < this.fanIn.size(); i++) {
             int fanInValue = this.fanIn.get(i).getState();
 
             if (typeValue >= GateType.AND.getValue() && typeValue < GateType.XOR.getValue()){
-
-                // If the state is equal to a collapsable value...
                 if (fanInValue == Gate.CI_TABLE[typeValue][0]) {
                     this.setState(Gate.CI_TABLE[typeValue][0] ^ Gate.CI_TABLE[typeValue][1]);
                     return;
@@ -193,20 +192,28 @@ public class Gate {
                 if (fanInValue == 2) {
                     this.setState(2);
                     return;
+                } else if (fanInValue == 1) {
+                    if (xorState) {
+                        this.setState(0);
+                        return;
+                    } else {
+                        xorState = true;
+                    }
                 }
-
-                // TODO: FIX!!
             }
         }
 
         if (unknownValue) {
             this.setState(2);
+            return;
         }
 
-//        if(this.type == GateType.XOR) //handle possible xor gate
-//            return  ? 1 : 0;
-//        else
-//            return invTable[ciTable[gateType][0]] ^ ciTable[gateType][1];
+        if (typeValue == GateType.XOR.getValue()) {
+            this.setState(xorState ? 1 : 0);
+            return;
+        }
+
+        this.setState(Gate.NOT_TABLE[Gate.CI_TABLE[typeValue][0] ^ Gate.CI_TABLE[typeValue][1]]);
 
     }
 
@@ -216,13 +223,13 @@ public class Gate {
             return;
         }
 
-        System.out.println("Evaluating gate " + this);
-
         if (evaluationMethod == GateEvaluationMethod.TABLE_LOOKUP) {
             this.tableLookupEvaluation();
         } else if (evaluationMethod == GateEvaluationMethod.INPUT_SCAN) {
             this.inputScanEvaluation();
         }
+
+        totalEvaluations += 1;
     }
 
     public boolean isOutput() {
@@ -240,7 +247,7 @@ public class Gate {
      */
     public LinkedList<Gate> getPropagationPath() {
         LinkedList<Gate> path = new LinkedList<>();
-        Set<Integer> visited = new HashSet<>();
+        Set<String> visited = new HashSet<>();
 
         Queue<Gate> gateProcessQueue = new ArrayDeque<>();
         gateProcessQueue.add(this);
@@ -249,11 +256,13 @@ public class Gate {
 
             Gate currentGate = gateProcessQueue.poll();
             path.add(currentGate);
-            visited.add(currentGate.getId());
 
             for (Gate f : currentGate.getRawFan(GateFanType.FANOUT)) {
-                if (!visited.contains(f.getId())) {
+
+                // Check to see if this gate has been visited from this exact path. This prevents infinite loops.
+                if (!visited.contains(currentGate.getId() + "=>" + f.getId())) {
                     gateProcessQueue.add(f);
+                    visited.add(currentGate.getId() + "=>" + f.getId());
                 }
             }
         }
