@@ -8,8 +8,8 @@ public class Gate {
     static final int[][] CI_TABLE = {
             {0,0},{1,0},{0,1},{1,1}
     };
-
     static final int[] NOT_TABLE = {1, 0, 2};
+
     static final int[][][] LOOKUP_TABLE = {
             {{0, 0, 0}, {0, 1, 2}, {0, 2, 2}}, // AND
             {{0, 1, 2}, {1, 1, 1}, {2, 1, 2}}, // OR
@@ -227,6 +227,12 @@ public class Gate {
             this.tableLookupEvaluation();
         } else if (evaluationMethod == GateEvaluationMethod.INPUT_SCAN) {
             this.inputScanEvaluation();
+        } else if (evaluationMethod == GateEvaluationMethod.HYBRID) {
+            if (this.getWireDriver().getState() == 2){
+                this.inputScanEvaluation();
+            } else {
+                this.tableLookupEvaluation();
+            }
         }
 
         totalEvaluations += 1;

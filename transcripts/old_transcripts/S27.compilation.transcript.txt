@@ -1,0 +1,35 @@
+[INFO][@2023-12-09T05:56:31.292915Z] Parsed module 'main' with 5 ports.
+[INFO][@2023-12-09T05:56:31.292952Z] Discovered port names: G0 G1 G2 G3 G17 
+[INFO][@2023-12-09T05:56:31.293090Z] Finished parsing module.
+[INFO][@2023-12-09T05:56:31.293447Z] Fanout ended at {NOR XG12}[28][2]
+[INFO][@2023-12-09T05:56:31.293477Z] Fanout ended at {OUTPUT G17}[4][3]
+[INFO][@2023-12-09T05:56:31.293490Z] Visited 21 gates during level adjustment and optimization.
+[INFO][@2023-12-09T05:56:31.293502Z] ==== VERILOG LOAD STATS ====
+[INFO][@2023-12-09T05:56:31.293512Z] Total Gates or Wires Created: 30
+[INFO][@2023-12-09T05:56:31.293521Z] Total Wires Removed Through Optimization: 12
+[INFO][@2023-12-09T05:56:31.293531Z] Gates at level 0:7
+[INFO][@2023-12-09T05:56:31.293544Z] Gates at level 1:6
+[INFO][@2023-12-09T05:56:31.293553Z] Gates at level 2:7
+[INFO][@2023-12-09T05:56:31.293562Z] Gates at level 3:2
+[INFO][@2023-12-09T05:56:31.293581Z] Gate list at level 0:[{INPUT G0}[0][0], {INPUT G1}[1][0], {INPUT G2}[2][0], {INPUT G3}[3][0], {DFF XG1}[17][0], {DFF XG2}[18][0], {DFF XG3}[19][0]]
+[INFO][@2023-12-09T05:56:31.293597Z] Gate list at level 1:[{NOT XG4}[20][1], {NOR XG6}[22][1], {NOR XG9}[25][1], {OR XG8}[24][1], {AND XG5}[21][1], {NOR XG11}[27][1]]
+[INFO][@2023-12-09T05:56:31.293611Z] Gate list at level 2:[{WIRE G14}[8][2], {WIRE G13}[13][2], {WIRE G16}[12][2], {OR XG7}[23][2], {NAND XG10}[26][2], {NOR XG12}[28][2], {NOT XG13}[29][2]]
+[INFO][@2023-12-09T05:56:31.293625Z] Gate list at level 3:[{WIRE G9}[14][3], {OUTPUT G17}[4][3]]
+INPUT false 0 0 1 XG4 G0
+INPUT false 0 0 1 XG6 G1
+INPUT false 0 0 1 XG9 G2
+INPUT false 0 0 1 XG8 G3
+OUTPUT true 3 1 XG13 0 G17
+DFF false 0 1 XG12 1 XG11 XG1
+DFF false 0 1 XG11 1 XG5 XG2
+DFF false 0 1 XG9 1 XG6 XG3
+NOT false 1 1 G0 2 XG5 XG12 XG4
+AND false 1 2 XG2 XG4 2 XG8 XG7 XG5
+NOR false 1 2 XG3 G1 2 XG9 XG7 XG6
+OR false 2 2 XG6 XG5 1 XG10 XG7
+OR false 1 2 XG5 G3 1 XG10 XG8
+NOR false 1 2 XG6 G2 0 XG9
+NAND false 2 2 XG7 XG8 1 XG11 XG10
+NOR false 1 2 XG10 XG1 2 XG12 XG13 XG11
+NOR false 2 2 XG11 XG4 0 XG12
+NOT false 2 1 XG11 1 G17 XG13

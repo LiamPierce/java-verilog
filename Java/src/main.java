@@ -10,7 +10,7 @@ public class main {
         String documentRoot = args.length > 0 ? args[0] : "/Users/lpierce/Documents/Case Western/ECSE318/homework_6_wsp11";
         System.out.println("Loading from path : " + documentRoot);
         String[] fileNames = {"S27", "S27", "S35"};
-        GateEvaluationMethod[] evaluationBenchmarks = {GateEvaluationMethod.TABLE_LOOKUP, GateEvaluationMethod.INPUT_SCAN};
+        GateEvaluationMethod[] evaluationBenchmarks = {GateEvaluationMethod.TABLE_LOOKUP, GateEvaluationMethod.INPUT_SCAN, GateEvaluationMethod.HYBRID};
 
         for (GateEvaluationMethod evaluationMethod : evaluationBenchmarks) {
             for (String file : fileNames) {
