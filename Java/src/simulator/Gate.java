@@ -8,8 +8,8 @@ public class Gate {
     static final int[][] CI_TABLE = {
             {0,0},{1,0},{0,1},{1,1}
     };
-    static final int[] NOT_TABLE = {1, 0, 2};
 
+    static final int[] NOT_TABLE = {1, 0, 2};
     static final int[][][] LOOKUP_TABLE = {
             {{0, 0, 0}, {0, 1, 2}, {0, 2, 2}}, // AND
             {{0, 1, 2}, {1, 1, 1}, {2, 1, 2}}, // OR
@@ -40,6 +40,8 @@ public class Gate {
 
     private ArrayList<Gate> fanIn = new ArrayList<>();
     private ArrayList<Gate> fanOut = new ArrayList<>();
+
+    private Gate next = null;
 
     public static int getAutoIncrement() {
         return Gate.autoIncrement;
@@ -123,7 +125,7 @@ public class Gate {
             Gate.maxGateLevel = level;
         }
 
-        if (level != -1){
+        if (level != -1 && this.type != GateType.WIRE){
             if (!Gate.gateLevelLookup.containsKey(level)) {
                 Gate.gateLevelLookup.put(level, new ArrayList<Gate>());
             }
@@ -150,7 +152,6 @@ public class Gate {
         int typeValue = (this.type.getValue());
         if (typeValue >= 0) {
             int intermediateValue = firstFanState;
-
             for (int i = 1; i < this.fanIn.size(); i++) {
                 int secondFanState = this.fanIn.get(i).getState();
                 intermediateValue = Gate.LOOKUP_TABLE[typeValue][intermediateValue][secondFanState];
@@ -162,7 +163,6 @@ public class Gate {
         } else if (this.type == GateType.NOT) {
             this.setState(Gate.NOT_TABLE[firstFanState]);
         }
-
     }
 
     private void inputScanEvaluation() {
@@ -221,19 +221,16 @@ public class Gate {
             return;
         }
 
+        //long evaluationStart = System.nanoTime(); -- This logging code was taking too long, slowing the system significantly.
+
         if (evaluationMethod == GateEvaluationMethod.TABLE_LOOKUP) {
             this.tableLookupEvaluation();
         } else if (evaluationMethod == GateEvaluationMethod.INPUT_SCAN) {
             this.inputScanEvaluation();
-        } else if (evaluationMethod == GateEvaluationMethod.HYBRID) {
-            if (this.getWireDriver().getState() == 2){
-                this.inputScanEvaluation();
-            } else {
-                this.tableLookupEvaluation();
-            }
         }
 
-        totalEvaluations += 1;
+        //totalEvaluationTime += System.nanoTime() - evaluationStart;
+        //totalEvaluations += 1;
     }
 
     public boolean isOutput() {
