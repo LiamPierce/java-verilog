@@ -201,6 +201,7 @@ public class Compiler extends Logging {
             this.log("==== VERILOG LOAD STATS ====");
             this.log("Total Gates or Wires Created: " + Gate.getAutoIncrement());
             this.log("Total Wires Removed Through Optimization: " + Gate.getOptimizedGates());
+            this.log("Total Gates: " + (Gate.getAutoIncrement() - Gate.getOptimizedGates()));
 
             for (int i = 0; i <= Gate.getMaxGateLevel(); i++) {
                 this.log("Gates at level "+i+":" + Gate.getGateCountAtLevel(i));

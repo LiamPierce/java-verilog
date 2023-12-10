@@ -1,20 +1,21 @@
-[INFO][@2023-12-10T03:16:14.426526Z] Parsed module 'main' with 5 ports.
-[INFO][@2023-12-10T03:16:14.426578Z] Discovered port names: G0 G1 G2 G3 G17 
-[INFO][@2023-12-10T03:16:14.426847Z] Finished parsing module.
-[INFO][@2023-12-10T03:16:14.427460Z] Fanout ended at {NOR XG12}[28][2]
-[INFO][@2023-12-10T03:16:14.427502Z] Fanout ended at {OUTPUT G17}[4][3]
-[INFO][@2023-12-10T03:16:14.427542Z] Visited 21 gates during level adjustment and optimization.
-[INFO][@2023-12-10T03:16:14.427551Z] ==== VERILOG LOAD STATS ====
-[INFO][@2023-12-10T03:16:14.427561Z] Total Gates or Wires Created: 30
-[INFO][@2023-12-10T03:16:14.427571Z] Total Wires Removed Through Optimization: 12
-[INFO][@2023-12-10T03:16:14.427600Z] Gates at level 0:7
-[INFO][@2023-12-10T03:16:14.427628Z] Gates at level 1:6
-[INFO][@2023-12-10T03:16:14.427636Z] Gates at level 2:4
-[INFO][@2023-12-10T03:16:14.427644Z] Gates at level 3:1
-[INFO][@2023-12-10T03:16:14.427686Z] Gate list at level 0:[{INPUT G0}[0][0], {INPUT G1}[1][0], {INPUT G2}[2][0], {INPUT G3}[3][0], {DFF XG1}[17][0], {DFF XG2}[18][0], {DFF XG3}[19][0]]
-[INFO][@2023-12-10T03:16:14.427699Z] Gate list at level 1:[{NOT XG4}[20][1], {NOR XG6}[22][1], {NOR XG9}[25][1], {OR XG8}[24][1], {AND XG5}[21][1], {NOR XG11}[27][1]]
-[INFO][@2023-12-10T03:16:14.427732Z] Gate list at level 2:[{OR XG7}[23][2], {NAND XG10}[26][2], {NOR XG12}[28][2], {NOT XG13}[29][2]]
-[INFO][@2023-12-10T03:16:14.427746Z] Gate list at level 3:[{OUTPUT G17}[4][3]]
+[INFO][@2023-12-10T03:29:25.030112Z] Parsed module 'main' with 5 ports.
+[INFO][@2023-12-10T03:29:25.030147Z] Discovered port names: G0 G1 G2 G3 G17 
+[INFO][@2023-12-10T03:29:25.030198Z] Finished parsing module.
+[INFO][@2023-12-10T03:29:25.030412Z] Fanout ended at {NOR XG12}[28][2]
+[INFO][@2023-12-10T03:29:25.030440Z] Fanout ended at {OUTPUT G17}[4][3]
+[INFO][@2023-12-10T03:29:25.030452Z] Visited 21 gates during level adjustment and optimization.
+[INFO][@2023-12-10T03:29:25.030471Z] ==== VERILOG LOAD STATS ====
+[INFO][@2023-12-10T03:29:25.030485Z] Total Gates or Wires Created: 30
+[INFO][@2023-12-10T03:29:25.030497Z] Total Wires Removed Through Optimization: 12
+[INFO][@2023-12-10T03:29:25.030509Z] Total Gates: 18
+[INFO][@2023-12-10T03:29:25.030523Z] Gates at level 0:7
+[INFO][@2023-12-10T03:29:25.030535Z] Gates at level 1:6
+[INFO][@2023-12-10T03:29:25.030546Z] Gates at level 2:4
+[INFO][@2023-12-10T03:29:25.030581Z] Gates at level 3:1
+[INFO][@2023-12-10T03:29:25.030605Z] Gate list at level 0:[{INPUT G0}[0][0], {INPUT G1}[1][0], {INPUT G2}[2][0], {INPUT G3}[3][0], {DFF XG1}[17][0], {DFF XG2}[18][0], {DFF XG3}[19][0]]
+[INFO][@2023-12-10T03:29:25.030623Z] Gate list at level 1:[{NOT XG4}[20][1], {NOR XG6}[22][1], {NOR XG9}[25][1], {OR XG8}[24][1], {AND XG5}[21][1], {NOR XG11}[27][1]]
+[INFO][@2023-12-10T03:29:25.030637Z] Gate list at level 2:[{OR XG7}[23][2], {NAND XG10}[26][2], {NOR XG12}[28][2], {NOT XG13}[29][2]]
+[INFO][@2023-12-10T03:29:25.030651Z] Gate list at level 3:[{OUTPUT G17}[4][3]]
 INPUT false 0 0 1 XG4 G0
 INPUT false 0 0 1 XG6 G1
 INPUT false 0 0 1 XG9 G2
