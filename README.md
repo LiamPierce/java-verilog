@@ -5,9 +5,9 @@ This is a verilog parser and virtual machine written in Java. It simulates veril
 
 ## Usage
 
-The operation of the simulator is broken up into two separate modules. The *Compiler* class is made to read and parse a slightly modified verilog file into a secondary file format.
+The operation of the simulator is broken up into two separate modules. The *Compiler* class is made to read and parse a slightly modified ISCAS file into a secondary file format.
 
-Below is an example of a fuller adder in the modified verilog file format.
+Below is an example of a fuller adder in ISCAS.
 
 ```verilog
 module full_adder(A, B, CIN, SUM, COUT);
